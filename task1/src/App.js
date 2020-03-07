@@ -1,60 +1,80 @@
 import React from "react";
 
-import "./App.css";
-
-const FunctionalComponent = ({ name, onClick }) => {
-  const greeting = "Hello, " + name;
-  return (
-    <button className="content" onClick={onClick}>
-      {greeting}
-    </button>
-  );
-};
-
-const Clock = ({ date }) => <div>{date.toLocaleTimeString()}</div>;
-
-
-class ClassComponent extends React.Component {
+class App extends React.Component {
   state = {
-    message: 0,
+    tasks: [],
+    id: 1,
+    name: 'Task name',
+    description: 'Task description',
+    priority: 123
   };
 
-  componentDidMount() {
-    setInterval(() => {
-      this.setState(this.state.date = new Date())
-    }, 100);
+  handleChangeName = (event) => {
+    const newName = event.target.value;
+    this.setState(state => ({ name: newName }));
+  };
+
+  handleChangeDescription = (event) => {
+    const newDescription = event.target.value;
+    this.setState(state => ({ description: newDescription }));
+  };
+
+  handleChangePriority = (event) => {
+    const newPriority = event.target.value;
+    this.setState(state => ({ priority: newPriority }));
+  };
+
+  NewTask = () => {
+    this.setState(state => ({ id: state.id + 1 }));
+    const newTask = {
+      id: this.state.id,
+      name: this.state.name,
+      description: this.state.description,
+      priority: this.state.priority
+    }
+    this.setState(state => (state.tasks.push(newTask)));
+  };
+
+  cmp = (index) => {
+    return (a, b) => {
+      if (a[index] > b[index]) {
+        return 1;
+      }
+      return -1;
+    }
   }
 
-  handleGreetingClick = () => {
-    this.setState(state => {
-      console.log(state);
-      let newState = {
-        message: state.message + 1,
-      };
-      return newState;
-    });
-  };
+  SortName = () => {
+    this.setState(state => this.state.tasks.sort(this.cmp('name')));
+  }
+
+  SortPriority = () => {
+    this.setState(state => this.state.tasks.sort(this.cmp('priority')));
+  }
+
+  TaskShow = ({ task }) => (
+    <div>
+    {task.id}) {task.name} ({task.description}) - {task.priority}
+    </div>
+  );
 
   render() {
-    const extendedName = this.props.name + " the developer";
-
     return (
-      <div className="app">
-        <FunctionalComponent
-          name={extendedName}
-          onClick={this.handleGreetingClick}
-        />
-        <div>{this.state.message}</div>
-        {
-          this.state.date ? <Clock date={this.state.date}/> : null
-        }
+      <div>
+        <h1>Task Manager</h1>
+        <div>
+          {this.state.tasks.map(task => this.TaskShow({task}))}
+        </div>
+        <button onClick={this.SortName}>Sort by Name</button>
+        <button onClick={this.SortPriority}>Sort by Priority</button>
+        <h2>Name: <input onChange={this.handleChangeName}/></h2>
+        <h2>Discription: <input onChange={this.handleChangeDescription}/></h2>
+        <h2>Priority: <input onChange={this.handleChangePriority}/></h2>
+        <br/>
+        <button onClick={this.NewTask}>Add New Task</button>
       </div>
     );
   }
 }
-
-const App = () => {
-  return <ClassComponent name="Valera" />;
-};
 
 export default App;
