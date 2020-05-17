@@ -28,7 +28,7 @@ class App extends React.Component {
 
   handleChangePriority = (event) => {
     const newPriority = event.target.value;
-    this.setState(state => ({ priority: newPriority }));
+    this.setState(state => ({ priority: parseInt(newPriority) }));
   };
 
   NewTask = () => {
