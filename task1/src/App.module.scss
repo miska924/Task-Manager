@@ -93,6 +93,7 @@
         //border-style: solid;
         //border-size: 3px;
         //border-color: #333333;
+        overflow: hidden;
         width: 200px;
         height: 40px;
         margin: 0.5vh 0.25vw 0.5vh 0.25vw;
@@ -103,6 +104,10 @@
         align-items: center;
         background-color: gray;
         color: black;
+      }
+      .taskName:hover {
+        //height:5vh;
+        overflow: auto;
       }
       .taskDescription {
         width: auto;
