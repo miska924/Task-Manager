@@ -66,12 +66,13 @@
     flex-direction: column;
     //justify-content: center;
     .taskLine {
+      padding: 3px 3px 3px 3px;
       font-size: 20px;
       position: relative;
       display: flex;
       flex-direction: row;
       justify-content: center;
-      align-items: center;
+      align-items: top;
 
       .taskId {
         overflow: hidden;
@@ -104,32 +105,33 @@
         align-items: center;
         background-color: gray;
         color: black;
-      }
-      .taskName:hover {
-        //height:5vh;
-        overflow: auto;
+
+        //justify-content: left;
+        //align-items: top;
+        //height:auto;
+        //overflow: auto;
       }
       .taskDescription {
         width: auto;
-        max-width: 30%;
-        height: 100%;
-        overflow: hidden;
+        //height: 100%;
+        //overflow: hidden;
         //border-style: solid;
         //border-size: 3px;
         //border-color: #333333;
         width: 400px;
-        height: 40px;
+        //height: 40px;
         margin: 0.5vh 0.25vw 0.5vh 0.25vw;
         position: relative;
         display: flex;
         flex-direction: row;
-        justify-content: center;
-        align-items: center;
+        //justify-content: center;
+        //align-items: center;
         background-color: gray;
         color: black;
-      }
-      .taskDescription:hover {
-        //height:5vh;
+
+        justify-content: left;
+        align-items: center;
+        height:auto;
         overflow: auto;
       }
       .taskPriority {
