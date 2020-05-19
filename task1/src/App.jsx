@@ -9,12 +9,18 @@ import { connect } from 'react-redux'
 const cx = classnames.bind(styles);
 
 const defaultState = {
-  tasks: []
+  tasks: [],
+  task: {
+    id: 1,
+    name: 'Task Name',
+    description: 'Task Description',
+    priority: 123
+  }
 };
 
 const cmp = (index) => {
   return (a, b) => {
-    if (a[index] > b[index] | (a[index]===b[index] & a['id'] === b['id'])) {
+    if (a[index] > b[index] | (a[index]===b[index] & a['id'] > b['id'])) {
       return 1;
     }
     return -1;
@@ -24,25 +30,67 @@ const cmp = (index) => {
 const rootReducer = (state = defaultState, action) => {
   switch (action.type) {
     case 'ADD': {
-      let New = state;
-      New.tasks.push(action.payload);
-      return New;
+      return {
+        ...state,
+        tasks: [...state.tasks, {...state.task, priority: parseInt(state.task.priority)}],
+        task: {
+          id: state.task.id + 1,
+          name: 'Task Name',
+          description: 'Task Description',
+          priority: 123
+        }
+      };
     }
     case 'SORT': {
       console.log('ahahah sort');
-      let New = state;
+      let New = [];
+      for (let i = 0; i < state.tasks.length; i++) {
+        New.push(state.tasks[i]);
+      }
       console.log(New);
       console.log("got:")
-      if (state.payload == 'NAME') {
-        New.tasks.sort(cmp('name'));
+      if (action.payload == 'NAME') {
+        New.sort(cmp('name'));
         console.log(New);
-        return New;
+        return {
+          ...state,
+          tasks: New
+        };
       } else {
-        New.tasks.sort(cmp('priority'));
+        New.sort(cmp('priority'));
         console.log(New);
-        return New;
+        return {
+          ...state,
+          tasks: New
+        };
       }
     }
+    case 'CHANGE':
+      if (action.payload.field == 'priority') {
+        return {
+          ...state,
+          task: {
+            ...state.task,
+            priority: action.payload.value
+          }
+        }
+      } else if (action.payload.field == 'name') {
+        return {
+          ...state,
+          task: {
+            ...state.task,
+            name: action.payload.value
+          }
+        }
+      } else if (action.payload.field == 'description') {
+        return {
+          ...state,
+          task: {
+            ...state.task,
+            description: action.payload.value
+          }
+        }
+      }
     default: {
       return state;
     }
@@ -51,9 +99,8 @@ const rootReducer = (state = defaultState, action) => {
 
 const store = createStore(rootReducer);
 
-const addTask = (task) => ({
+const addTask = () => ({
   type: 'ADD',
-  payload: task
 });
 
 const sort = (id) => ({
@@ -61,51 +108,39 @@ const sort = (id) => ({
   payload: id
 });
 
+const change = (field, value) => ({
+  type: 'CHANGE',
+  payload: {field: field, value: value}
+});
+
 const mapStateToProps = (state) => {
   console.log(state);
-  return ({tasks: state.tasks});
+  return ({tasks: state.tasks, task: state.task});
 };
 
 const mapDispatchToProps = dispatch => {
   return {
     dispatcherADD: (task) => {return dispatch(addTask(task))},
-    dispatcherSORT: (id) => {return dispatch(sort(id))}
+    dispatcherSORT: (id) => {return dispatch(sort(id))},
+    dispatcherCHANGE: (field, value) => {return dispatch(change(field, value))}
   }
 }
 
 class MainComponent extends React.Component {
-  state = {
-    kek: 0,
-    id: 1,
-    name: 'Task name',
-    description: 'Task description',
-    priority: 123
-  };
 
   handleChangeName = (event) => {
     const newName = event.target.value;
-    this.setState(state => ({ name: newName }));
+    this.props.dispatcherCHANGE('name', newName);
   };
 
   handleChangeDescription = (event) => {
     const newDescription = event.target.value;
-    this.setState(state => ({ description: newDescription }));
+    this.props.dispatcherCHANGE('description', newDescription);
   };
 
   handleChangePriority = (event) => {
     const newPriority = event.target.value;
-    this.setState(state => ({ priority: parseInt(newPriority) }));
-  };
-
-  NewTask = () => {
-    this.setState(state => ({ id: state.id + 1 }));
-    const newTask = {
-      id: this.state.id,
-      name: this.state.name,
-      description: this.state.description,
-      priority: this.state.priority
-    }
-    return newTask;
+    this.props.dispatcherCHANGE('priority', newPriority);
   };
 
   TaskShow = ({ task }) => (
@@ -136,19 +171,19 @@ class MainComponent extends React.Component {
           <div className={cx("boxes")}>
             <div className={cx("box")}>
               <h2>Name</h2>
-              <input onChange={this.handleChangeName}/>
+              <input value={this.props.task.name} onChange={this.handleChangeName}/>
             </div>
             <div className={cx("box")}>
               <h2>Discription</h2>
-              <input onChange={this.handleChangeDescription}/>
+              <input value={this.props.task.description} onChange={this.handleChangeDescription}/>
             </div>
             <div className={cx("box")}>
               <h2>Priority</h2>
-              <input onChange={this.handleChangePriority}/>
+              <input type="text" value={this.props.task.priority} onChange={this.handleChangePriority}/>
             </div>
           </div>
           <div className={cx("buttons")}>
-            <button className={cx("button")} onClick={() => this.props.dispatcherADD(this.NewTask())}>Add New Task</button>
+            <button className={cx("button")} onClick={() => this.props.dispatcherADD()}>Add New Task</button>
           </div>
         </div>
         <div className={cx("buttons")}>
