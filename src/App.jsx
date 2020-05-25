@@ -5,16 +5,23 @@ import { render } from 'react-dom'
 import { Provider } from 'react-redux'
 import { createStore } from 'redux'
 import { connect } from 'react-redux'
+import { BrowserRouter, Switch, Route, Link} from 'react-router-dom';
 
 const cx = classnames.bind(styles);
 
 const defaultState = {
+  current_project_id: 0,
+  projects: [],
   tasks: [],
   task: {
-    id: 1,
-    name: 'Task Name',
-    description: 'Task Description',
-    priority: 123
+    id: 0,
+    name: '',
+    description: '',
+    priority: '',
+  },
+  project: {
+    id: 0,
+    name: ''
   }
 };
 
@@ -29,43 +36,52 @@ const cmp = (index) => {
 
 const rootReducer = (state = defaultState, action) => {
   switch (action.type) {
-    case 'ADD': {
+    case 'ADD_TASK': {
+      let New = state.tasks;
+      New[state.current_project_id].push(state.task);
       return {
         ...state,
-        tasks: [...state.tasks, {...state.task, priority: parseInt(state.task.priority)}],
+        tasks: New,
         task: {
           id: state.task.id + 1,
-          name: 'Task Name',
-          description: 'Task Description',
-          priority: 123
+          name: '',
+          description: '',
+          priority: '',
         }
       };
     }
+    case 'ADD_PROJECT':
+      let New = [...state.tasks];
+      New.push([]);
+      return {
+        ...state,
+        projects: [...state.projects, {...state.project}],
+        tasks: New,
+        project: {
+          id: state.project.id + 1,
+          name: ''
+        }
+      };
     case 'SORT': {
       console.log('ahahah sort');
       let New = [];
-      for (let i = 0; i < state.tasks.length; i++) {
-        New.push(state.tasks[i]);
+      for (let x = 0; x < state.tasks.length; x++) {
+        if (x == state.current_project_id)  {
+          New.push([]);
+          for (let y = 0; y < state.tasks[x].length; y++) {
+            New[x].push(state.tasks[state.current_project_id][y]);
+          }
+          New[x].sort(cmp(action.payload.toLowerCase()));
+        } else {
+          New.push(state.tasks[x]);
+        }
       }
-      console.log(New);
-      console.log("got:")
-      if (action.payload == 'NAME') {
-        New.sort(cmp('name'));
-        console.log(New);
-        return {
-          ...state,
-          tasks: New
-        };
-      } else {
-        New.sort(cmp('priority'));
-        console.log(New);
-        return {
-          ...state,
-          tasks: New
-        };
-      }
+      return {
+        ...state,
+        tasks: New
+      };
     }
-    case 'CHANGE':
+    case 'CHANGE_TASK':
       if (action.payload.field == 'priority') {
         return {
           ...state,
@@ -91,6 +107,19 @@ const rootReducer = (state = defaultState, action) => {
           }
         }
       }
+    case 'CHANGE_PROJECT':
+      return {
+        ...state,
+        project: {
+          ...state.project,
+          name: action.payload.value
+        }
+      }
+    case 'SWITCH_PROJECT':
+      return {
+        ...state,
+        current_project_id: action.payload.value
+      }
     default: {
       return state;
     }
@@ -99,8 +128,12 @@ const rootReducer = (state = defaultState, action) => {
 
 const store = createStore(rootReducer);
 
+const addProject = () => ({
+  type: 'ADD_PROJECT'
+});
+
 const addTask = () => ({
-  type: 'ADD',
+  type: 'ADD_TASK'
 });
 
 const sort = (id) => ({
@@ -108,39 +141,101 @@ const sort = (id) => ({
   payload: id
 });
 
-const change = (field, value) => ({
-  type: 'CHANGE',
+const changeTask = (field, value) => ({
+  type: 'CHANGE_TASK',
   payload: {field: field, value: value}
+});
+
+const switchProject = (value) => ({
+  type: 'SWITCH_PROJECT',
+  payload: {value: value}
+});
+
+const changeProject = (value) => ({
+  type: 'CHANGE_PROJECT',
+  payload: {value: value}
 });
 
 const mapStateToProps = (state) => {
   console.log(state);
-  return ({tasks: state.tasks, task: state.task});
+  return (state);
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps0 = dispatch => {
   return {
-    dispatcherADD: (task) => {return dispatch(addTask(task))},
-    dispatcherSORT: (id) => {return dispatch(sort(id))},
-    dispatcherCHANGE: (field, value) => {return dispatch(change(field, value))}
+    dispatcherADD_PROJECT: () => {return dispatch(addProject())},
+    dispatcherCHANGE_PROJECT: (value) => {return dispatch(changeProject(value))},
+    dispatcherSWITCH: (value) => {return dispatch(switchProject(value))}
   }
 }
 
-class MainComponent extends React.Component {
+const mapDispatchToProps1 = dispatch => {
+  return {
+    dispatcherADD_TASK: () => {return dispatch(addTask())},
+    dispatcherSORT: (id) => {return dispatch(sort(id))},
+    dispatcherCHANGE_TASK: (field, value) => {return dispatch(changeTask(field, value))},
+  }
+}
+
+class AddProjectComponent extends React.Component {
 
   handleChangeName = (event) => {
     const newName = event.target.value;
-    this.props.dispatcherCHANGE('name', newName);
+    this.props.dispatcherCHANGE_PROJECT(newName);
+  };
+
+  ProjectShow = ({ project }) => (
+    <div className={cx("taskLine")}>
+      <div className={cx("taskId")}>
+        #{project.id}
+      </div>
+      <div className={cx("taskName")}>
+        <Link to="/project" onClick={() => this.props.dispatcherSWITCH(project.id)}>{project.name}</Link>
+      </div>
+    </div>
+  );
+  render() {
+    return (
+      <div className={cx("container")}>
+        <div className={cx("header")}>
+          <h1>Task Manager</h1>
+        </div>
+        <div className={cx("input")}>
+          <div className={cx("boxes")}>
+            <div className={cx("box")}>
+              <h2>Name</h2>
+              <input value={this.props.project.name} placeholder="Project Name" onChange={this.handleChangeName}/>
+            </div>
+          </div>
+          <div className={cx("buttons")}>
+            <button className={cx("button")} onClick={() => this.props.dispatcherADD_PROJECT()}>Add New Project</button>
+          </div>
+        </div>
+        <div className={cx("content")}>
+          {
+            this.props.projects.map(project => this.ProjectShow({project}))
+          }
+        </div>
+      </div>
+    );
+  }
+}
+
+class ProjectComponent extends React.Component {
+
+  handleChangeName = (event) => {
+    const newName = event.target.value;
+    this.props.dispatcherCHANGE_TASK('name', newName);
   };
 
   handleChangeDescription = (event) => {
     const newDescription = event.target.value;
-    this.props.dispatcherCHANGE('description', newDescription);
+    this.props.dispatcherCHANGE_TASK('description', newDescription);
   };
 
   handleChangePriority = (event) => {
     const newPriority = event.target.value;
-    this.props.dispatcherCHANGE('priority', newPriority);
+    this.props.dispatcherCHANGE_TASK('priority', newPriority);
   };
 
   TaskShow = ({ task }) => (
@@ -164,26 +259,29 @@ class MainComponent extends React.Component {
     console.log(this.props);
     return (
       <div className={cx("container")}>
+        <div className={cx("return")}>
+          <Link to="/"><img src={require('./return.png')}  height="60" width="60"/></Link>
+        </div>
         <div className={cx("header")}>
-          <h1>Task Manager</h1>
+          <h1>{(this.props.projects[this.props.current_project_id].name).toUpperCase()}</h1>
         </div>
         <div className={cx("input")}>
           <div className={cx("boxes")}>
             <div className={cx("box")}>
               <h2>Name</h2>
-              <input value={this.props.task.name} onChange={this.handleChangeName}/>
+              <input value={this.props.task.name} placeholder="Task Name" onChange={this.handleChangeName}/>
             </div>
             <div className={cx("box")}>
-              <h2>Discription</h2>
-              <input value={this.props.task.description} onChange={this.handleChangeDescription}/>
+              <h2>Description</h2>
+              <input value={this.props.task.description} placeholder="Task Description" onChange={this.handleChangeDescription}/>
             </div>
             <div className={cx("box")}>
               <h2>Priority</h2>
-              <input type="text" value={this.props.task.priority} onChange={this.handleChangePriority}/>
+              <input type="text" value={this.props.task.priority} placeholder="Task Priority" onChange={this.handleChangePriority}/>
             </div>
           </div>
           <div className={cx("buttons")}>
-            <button className={cx("button")} onClick={() => this.props.dispatcherADD()}>Add New Task</button>
+            <button className={cx("button")} onClick={() => this.props.dispatcherADD_TASK()}>Add New Task</button>
           </div>
         </div>
         <div className={cx("buttons")}>
@@ -192,7 +290,7 @@ class MainComponent extends React.Component {
         </div>
         <div className={cx("content")}>
           {
-              this.props.tasks.map(task => this.TaskShow({task}))
+              this.props.tasks[this.props.current_project_id].map(task => this.TaskShow({task}))
           }
         </div>
       </div>
@@ -200,17 +298,22 @@ class MainComponent extends React.Component {
   }
 }
 
-const WrappedComponent = connect(mapStateToProps, mapDispatchToProps)(MainComponent);
+const WrappedAddProjectComponent = connect(mapStateToProps, mapDispatchToProps0)(AddProjectComponent);
+const WrappedProjectComponent = connect(mapStateToProps, mapDispatchToProps1)(ProjectComponent);
 
 class App extends React.Component {
   render() {
     return (
       <Provider store={store}>
-        <WrappedComponent />
+        <BrowserRouter>
+          <Switch>
+            <Route path='/' exact component={WrappedAddProjectComponent} />
+            <Route path='/project' exact component={WrappedProjectComponent} />
+          </Switch>
+        </BrowserRouter>
       </Provider>
     );
   }
 };
-
 
 export default App;
